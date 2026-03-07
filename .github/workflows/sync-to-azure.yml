@@ -1,0 +1,41 @@
+name: Sync to Azure DevOps
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Sync GitHub and Azure DevOps activities
+        uses: a11smiles/GitSync@v1.2.3
+      
+      - name: Push main to Azure DevOps
+        env:
+          AZURE_TOKEN: ${{ secrets.AZURE_DEVOPS_TOKEN }}
+          AZURE_ORG: jasonachkardiab
+          AZURE_PROJECT: WebGoat
+          AZURE_REPO: WebGoat
+        run: |
+          set -euo pipefail
+
+          AZURE_REPO_URL="https://pat:${AZURE_TOKEN}@dev.azure.com/${AZURE_ORG}/${AZURE_PROJECT}/_git/${AZURE_REPO}"
+
+          # Create or update the remote
+          if git remote get-url azure >/dev/null 2>&1; then
+            git remote set-url azure "$AZURE_REPO_URL"
+          else
+            git remote add azure "$AZURE_REPO_URL"
+          fi
+
+          # Sync main (force keeps Azure main identical to GitHub main)
+          git push azure refs/heads/main:refs/heads/main --force
+
+          # Optional: keep tags in sync too
+          git push azure --tags --force
