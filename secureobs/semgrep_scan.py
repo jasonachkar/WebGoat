@@ -5,7 +5,7 @@ import requests
 import sys
 
 project_path = sys.argv[1]
-api_url = sys.argv[2]
+api_semgrep_url = sys.argv[2]
 tenant_id = sys.argv[3]
 
 '''
@@ -61,7 +61,7 @@ def send_to_api(findings):
     '''
     This method sends the findings to an API endpoint.
     '''
-    url = api_url
+    url = api_semgrep_url
     headers = {
         "Content-Type": "application/json"
     }

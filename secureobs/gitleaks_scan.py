@@ -4,7 +4,7 @@ import requests
 import sys
 
 project_path = sys.argv[1]
-api_url = sys.argv[2]
+api_gitleaks_url = sys.argv[2]
 output_path = sys.argv[3]
 tenant_id = sys.argv[4]
 
@@ -60,7 +60,7 @@ def send_to_api(findings):
     This method sends the findings to an API endpoint.
     '''
     response = requests.post(
-        url=api_url,
+        url=api_gitleaks_url,
         headers={"Content-Type": "application/json"},
         data=json.dumps([finding.__dict__ for finding in findings]),
         verify=False
@@ -83,5 +83,5 @@ class GitleaksFinding:
 
 if __name__ == "__main__":
     run_gitleaks(project_path)
-    response = parse_gitleaks_output("C:\\Users\\jason\\source\\repos\\SecureObs\\gitleaks-report.json")
+    response = parse_gitleaks_output(output_path)
     send_to_api(response)
