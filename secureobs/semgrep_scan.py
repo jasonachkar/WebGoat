@@ -5,7 +5,7 @@ import requests
 import sys
 
 project_path = sys.argv[1]
-api_semgrep_url = sys.argv[2]
+api_url = sys.argv[2]
 tenant_id = sys.argv[3]
 
 '''
@@ -46,7 +46,8 @@ def parse_semgrep_output(raw_json):
                 severity=result.get('extra', {}).get('severity', ''),
                 message=result.get('extra', {}).get('message', ''),
                 cwe=result.get('extra', {}).get('cwe', []),
-                owasp=result.get('extra', {}).get('owasp', [])
+                owasp=result.get('extra', {}).get('owasp', []),
+                tenantId= tenant_id
             ))
     except json.JSONDecodeError as e:
         print(f"Error parsing JSON: {e}")
@@ -61,7 +62,7 @@ def send_to_api(findings):
     '''
     This method sends the findings to an API endpoint.
     '''
-    url = api_semgrep_url
+    url = api_url
     headers = {
         "Content-Type": "application/json"
     }
@@ -78,12 +79,13 @@ class SemgrepFinding:
     '''
     This class represents a Semgrep finding.
     '''
-    def __init__(self, checkId, path, lines, severity, message, cwe, owasp):
+    def __init__(self, checkId, path, lines, severity, message, cwe, owasp, tenantId):
         self.checkId = checkId
         self.path = path
         self.lines = lines
         self.severity = severity
         self.message = message
+        self.tenantId = tenantId
         self.cwe = cwe
         self.owasp = owasp
 

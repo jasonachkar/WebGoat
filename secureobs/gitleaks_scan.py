@@ -4,8 +4,8 @@ import requests
 import sys
 
 project_path = sys.argv[1]
-api_gitleaks_url = sys.argv[2]
-output_path = sys.argv[3]
+api_url = sys.argv[2]
+output_path = sys.argv[3] + "\\gitleaks-report.json"
 tenant_id = sys.argv[4]
 
 def run_gitleaks(path):
@@ -13,7 +13,7 @@ def run_gitleaks(path):
     Runs gitleaks with the specified configuration on the given path.
     '''
     try:
-        result = subprocess.run(['gitleaks', 'dir', '--report-format', 'json','--report-path', f"{output_path}\\gitleaks-report.json",path], capture_output=True, text=True)
+        result = subprocess.run(['gitleaks', 'dir', '--report-format', 'json','--report-path', output_path ,path], capture_output=True, text=True)
         return result.stdout
     except subprocess.CalledProcessError as e:
         print(f"Error running gitleaks: {e.stderr}")
@@ -40,7 +40,8 @@ def parse_gitleaks_output(file_path):
                     file=finding.get('File', ''),
                     line=finding.get('StartLine', ''),
                     fingerprint=finding.get('Fingerprint', ''),
-                    match=finding.get('Match', '')
+                    match=finding.get('Match', ''),
+                    tenantId= tenant_id
                 ))
     except json.JSONDecodeError as e:
         print(f"Error parsing JSON: {e}")
@@ -60,7 +61,7 @@ def send_to_api(findings):
     This method sends the findings to an API endpoint.
     '''
     response = requests.post(
-        url=api_gitleaks_url,
+        url=api_url,
         headers={"Content-Type": "application/json"},
         data=json.dumps([finding.__dict__ for finding in findings]),
         verify=False
@@ -73,13 +74,14 @@ class GitleaksFinding:
     '''
     This class represents a Gitleaks finding.
     '''
-    def __init__ (self, ruleId, description, file, line, fingerprint,match):
+    def __init__ (self, ruleId, description, file, line, fingerprint,match,tenantId):
         self.ruleId = ruleId
         self.description = description
         self.file = file
         self.line = line
         self.fingerprint = fingerprint
         self.match = match
+        self.tenantId = tenantId
 
 if __name__ == "__main__":
     run_gitleaks(project_path)
