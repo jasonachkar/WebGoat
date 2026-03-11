@@ -24,7 +24,7 @@ stages:
         python3 -m pip install semgrep
       displayName: 'SemGrep Installation'
     - script: |
-        python3 secureobs/semgrep_scan.py $(Build.SourcesDirectory) $(API_SEMGREP_URL) $(TENANT_ID)
+        python3 secureobs/semgrep_scan.py $(Build.SourcesDirectory) $(API_SEMGREP_URL) $(TENANT_ID) $(Build.BuildId)
       displayName: 'Running Semgrep'
 
 - stage: GitLeaks
@@ -39,5 +39,5 @@ stages:
         sudo mv gitleaks /usr/local/bin/gitleaks
       displayName: 'Installing gitleaks ...'
     - script: |
-        python3 secureobs/gitleaks_scan.py $(Build.SourcesDirectory) $(API_GITLEAKS_URL) $(Agent.TempDirectory) $(TENANT_ID)
+        python3 secureobs/gitleaks_scan.py $(Build.SourcesDirectory) $(API_GITLEAKS_URL) $(Agent.TempDirectory) $(TENANT_ID) $(Build.BuildId)
       displayName: 'Running Gitleaks'

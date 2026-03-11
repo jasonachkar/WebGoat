@@ -7,6 +7,7 @@ import sys
 project_path = sys.argv[1]
 api_url = sys.argv[2]
 tenant_id = sys.argv[3]
+pipeline_run_id = sys.argv[4]
 
 '''
 This script runs semgrep on a specified path and captures the output.
@@ -47,7 +48,8 @@ def parse_semgrep_output(raw_json):
                 message=result.get('extra', {}).get('message', ''),
                 cwe=result.get('extra', {}).get('cwe', []),
                 owasp=result.get('extra', {}).get('owasp', []),
-                tenantId= tenant_id
+                tenantId= tenant_id,
+                pipelineRunId= pipeline_run_id
             ))
     except json.JSONDecodeError as e:
         print(f"Error parsing JSON: {e}")
@@ -62,7 +64,7 @@ def send_to_api(findings):
     '''
     This method sends the findings to an API endpoint.
     '''
-    url = api_url
+    url = api_url +"/Findings/bulk-semgrep"
     headers = {
         "Content-Type": "application/json"
     }
@@ -72,6 +74,7 @@ def send_to_api(findings):
             print("Findings have been successfully created in the database.")
         else:
             print(f"Failed to send findings to API. Status code: {response.status_code}, Response: {response.text}")
+            sys.exit(1)
     except requests.exceptions.RequestException as e:
         print(f"Error sending findings to API: {e}")
 
@@ -79,12 +82,13 @@ class SemgrepFinding:
     '''
     This class represents a Semgrep finding.
     '''
-    def __init__(self, checkId, path, lines, severity, message, cwe, owasp, tenantId):
+    def __init__(self, checkId, path, lines, severity, message, cwe, owasp, tenantId,pipelineRunId):
         self.checkId = checkId
         self.path = path
         self.lines = lines
         self.severity = severity
         self.message = message
+        self.pipelineRunId = pipelineRunId
         self.tenantId = tenantId
         self.cwe = cwe
         self.owasp = owasp

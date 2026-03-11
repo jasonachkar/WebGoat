@@ -1,3 +1,4 @@
+import os
 import subprocess
 import json
 import requests
@@ -5,8 +6,9 @@ import sys
 
 project_path = sys.argv[1]
 api_url = sys.argv[2]
-output_path = sys.argv[3] + "\\gitleaks-report.json"
+output_path = os.path.join(sys.argv[3], 'gitleaks_output.json')
 tenant_id = sys.argv[4]
+pipeline_run_id = sys.argv[5]
 
 def run_gitleaks(path):
     '''
@@ -41,7 +43,8 @@ def parse_gitleaks_output(file_path):
                     line=finding.get('StartLine', ''),
                     fingerprint=finding.get('Fingerprint', ''),
                     match=finding.get('Match', ''),
-                    tenantId= tenant_id
+                    tenantId= tenant_id,
+                    pipelineRunId= pipeline_run_id
                 ))
     except json.JSONDecodeError as e:
         print(f"Error parsing JSON: {e}")
@@ -60,21 +63,36 @@ def send_to_api(findings):
     '''
     This method sends the findings to an API endpoint.
     '''
-    response = requests.post(
-        url=api_url,
-        headers={"Content-Type": "application/json"},
-        data=json.dumps([finding.__dict__ for finding in findings]),
-        verify=False
-    )
-    print(f"API Response Status Code: {response.status_code}")
-    print(f"API Response Text: {response.text}")
+    try:
+        response = requests.post(
+            url=api_url+"/Findings/bulk-gitleaks",
+            headers={"Content-Type": "application/json"},
+            data=json.dumps([finding.__dict__ for finding in findings]),
+            verify=False
+        )
+        if response.status_code == 201:
+            print("Findings have been successfully created in the database.")
+        else:
+            print(f"Failed to send findings to API. Status code: {response.status_code}, Response: {response.text}")
+            sys.exit(1)
+    except requests.exceptions.RequestException as e:
+        print(f"API Response Status Code: {response.status_code}")
+        print(f"API Response Text: {response.text}")
 
+def is_critical_found():
+    try:
+        result = requests.get(api_url + f"/Findings/{tenant_id}/blocking?pipelineRunId={pipeline_run_id}", verify=False)
+        if result.status_code == 200 and result.json() == True:
+            print("Critical findings detected.")
+            sys.exit(1)
+    except requests.exceptions.RequestException as e:
+        print(f"Error checking for critical findings: {e}")
 
 class GitleaksFinding:
     '''
     This class represents a Gitleaks finding.
     '''
-    def __init__ (self, ruleId, description, file, line, fingerprint,match,tenantId):
+    def __init__ (self, ruleId, description, file, line, fingerprint,match,tenantId,pipelineRunId):
         self.ruleId = ruleId
         self.description = description
         self.file = file
@@ -82,8 +100,10 @@ class GitleaksFinding:
         self.fingerprint = fingerprint
         self.match = match
         self.tenantId = tenantId
+        self.pipelineRunId = pipelineRunId
 
 if __name__ == "__main__":
     run_gitleaks(project_path)
     response = parse_gitleaks_output(output_path)
     send_to_api(response)
+    is_critical_found()
