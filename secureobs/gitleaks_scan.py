@@ -82,7 +82,7 @@ def send_to_api(findings):
 def is_critical_found():
     try:
         result = requests.get(api_url + f"/Findings/{tenant_id}/blocking?pipelineRunId={pipeline_run_id}", verify=False)
-        if result.status_code == 200 and result.json() == True:
+        if result.status_code == 200:
             print("Critical findings detected.")
             sys.exit(1)
     except requests.exceptions.RequestException as e:
