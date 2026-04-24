@@ -112,4 +112,7 @@ if __name__ == "__main__":
     result = run_semgrep(project_path)
     if result:
         findings = parse_semgrep_output(result)
-        send_to_api(findings)
+        if findings:
+            send_to_api(findings)
+        else: 
+            print("No findings to send.")
