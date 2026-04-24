@@ -4,6 +4,7 @@ import json
 import requests
 import sys
 import msal
+import base64
 
 project_path = sys.argv[1]
 api_url = sys.argv[2]
