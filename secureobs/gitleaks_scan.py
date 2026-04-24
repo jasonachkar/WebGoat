@@ -62,9 +62,10 @@ def parse_gitleaks_output(file_path):
 def get_secrets():
     client_id = os.environ.get("Client_Id")
     client_secret = os.environ.get("Client_Secret")
+    azure_tenant_id = os.environ.get("Azure_Tenant_Id")
     token_dict = msal.ConfidentialClientApplication(
         client_id=client_id,
-        authority=f"https://login.microsoftonline.com/{tenant_id}",
+        authority=f"https://login.microsoftonline.com/{azure_tenant_id}",
         client_credential=client_secret).acquire_token_for_client(scopes=["api://b277185f-d973-4bf5-bf2c-568d8b1cf3d6/.default"])
     return token_dict["access_token"]
     
