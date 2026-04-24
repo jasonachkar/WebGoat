@@ -4,6 +4,7 @@ import json
 import requests
 import sys
 import msal
+import base64
 
 project_path = sys.argv[1]
 api_url = sys.argv[2]
@@ -67,6 +68,10 @@ def get_secrets():
         client_id=client_id,
         authority=f"https://login.microsoftonline.com/{azure_tenant_id}",
         client_credential=client_secret).acquire_token_for_client(scopes=["api://ac3acd19-acee-450c-8d6a-3841eea22d3c/.default"])
+    token = token_dict["access_token"]
+    payload = token.split('.')[1]
+    payload += '=' * (4 - len(payload) % 4)
+    print(json.loads(base64.b64decode(payload)))
     return token_dict["access_token"]
     
 
