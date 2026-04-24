@@ -66,7 +66,7 @@ def get_secrets():
     token_dict = msal.ConfidentialClientApplication(
         client_id=client_id,
         authority=f"https://login.microsoftonline.com/{azure_tenant_id}",
-        client_credential=client_secret).acquire_token_for_client(scopes=["api://b277185f-d973-4bf5-bf2c-568d8b1cf3d6/.default"])
+        client_credential=client_secret).acquire_token_for_client(scopes=["api://ac3acd19-acee-450c-8d6a-3841eea22d3c/.default"])
     return token_dict["access_token"]
     
 
