@@ -83,7 +83,7 @@ def send_to_api(findings):
             data=json.dumps([finding.__dict__ for finding in findings]),
             verify=False
         )
-        if response.status_code == 201:
+        if response.status_code in (201,204):
             print("Findings have been successfully created in the database.")
         else:
             print(f"Failed to send findings to API. Status code: {response.status_code}, Response: {response.text}")
