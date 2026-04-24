@@ -31,6 +31,7 @@ stages:
       env:
         Client_Id: $(Client_Id)
         Client_Secret: $(Client_Secret)
+        Azure_Tenant_Id: $(Azure_Tenant_Id)
 
 - stage: GitLeaks
   displayName: 'Running GitLeaks ...'
@@ -51,3 +52,4 @@ stages:
       env:
         Client_Id: $(Client_Id)
         Client_Secret: $(Client_Secret)
+        Azure_Tenant_Id: $(Azure_Tenant_Id)
