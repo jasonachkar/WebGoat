@@ -3,6 +3,7 @@ import subprocess
 import json
 import requests
 import sys
+import msal
 
 project_path = sys.argv[1]
 api_url = sys.argv[2]
@@ -40,7 +41,8 @@ def parse_gitleaks_output(file_path):
                     ruleId=finding.get('RuleID', ''),
                     description=finding.get('Description', ''),
                     file=finding.get('File', ''),
-                    line=finding.get('StartLine', ''),
+                    startLine=finding.get('StartLine', ''),
+                    endLine=finding.get('EndLine', ''),
                     fingerprint=finding.get('Fingerprint', ''),
                     match=finding.get('Match', ''),
                     tenantId= tenant_id,
@@ -57,7 +59,15 @@ def parse_gitleaks_output(file_path):
         return []
     return response
 
-
+def get_secrets():
+    client_id = os.environ.get("Client_Id")
+    client_secret = os.environ.get("Client_Secret")
+    token_dict = msal.ConfidentialClientApplication(
+        client_id=client_id,
+        authority=f"https://login.microsoftonline.com/{tenant_id}",
+        client_credential=client_secret).acquire_token_for_client(scopes=["api://b277185f-d973-4bf5-bf2c-568d8b1cf3d6/.default"])
+    return token_dict["access_token"]
+    
 
 def send_to_api(findings):
     '''
@@ -66,11 +76,12 @@ def send_to_api(findings):
     try:
         response = requests.post(
             url=api_url+"/Findings/bulk-gitleaks",
-            headers={"Content-Type": "application/json"},
+            headers={"Content-Type": "application/json",
+                     "Authorization":f"Bearer {get_secrets()}"},
             data=json.dumps([finding.__dict__ for finding in findings]),
             verify=False
         )
-        if response.status_code == 204:
+        if response.status_code == 201:
             print("Findings have been successfully created in the database.")
         else:
             print(f"Failed to send findings to API. Status code: {response.status_code}, Response: {response.text}")
@@ -82,7 +93,7 @@ def send_to_api(findings):
 def is_critical_found():
     try:
         result = requests.get(api_url + f"/Findings/{tenant_id}/blocking?pipelineRunId={pipeline_run_id}", verify=False)
-        if result.status_code == 200:
+        if result.status_code == 200 and result.json() == True:
             print("Critical findings detected.")
             sys.exit(1)
     except requests.exceptions.RequestException as e:
@@ -92,11 +103,12 @@ class GitleaksFinding:
     '''
     This class represents a Gitleaks finding.
     '''
-    def __init__ (self, ruleId, description, file, line, fingerprint,match,tenantId,pipelineRunId):
+    def __init__ (self, ruleId, description, file, startLine,endLine, fingerprint,match,tenantId,pipelineRunId):
         self.ruleId = ruleId
         self.description = description
         self.file = file
-        self.line = line
+        self.startLine = startLine
+        self.endLine = endLine
         self.fingerprint = fingerprint
         self.match = match
         self.tenantId = tenantId
